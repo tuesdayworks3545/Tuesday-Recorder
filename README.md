@@ -47,4 +47,4 @@ Tuesday Recorder runs locally. Recording files and recovery checkpoints stay in 
 
 ## License
 
-Copyright Journey to Healing Psychotherapy and Consulting. All rights reserved. No license is granted for reuse or redistribution of the source code unless the copyright owner gives written permission.
+Copyright Tuesday Works. All rights reserved. No license is granted for reuse or redistribution of the source code unless the copyright owner gives written permission.

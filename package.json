@@ -3,7 +3,7 @@
   "version": "1.1.0",
   "description": "A simple Windows audio recorder with per-source mixing and MP3 output.",
   "main": "src/main.js",
-  "author": "Journey to Healing",
+  "author": "Tuesday Works",
   "license": "UNLICENSED",
   "private": true,
   "scripts": {
