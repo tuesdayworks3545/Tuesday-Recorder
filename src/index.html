@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tuesday Recorder</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <img style="width:76px;height:76px;object-fit:contain;margin-right:18px" src="assets/tuesday.png" alt="Tuesday logo">
+    <div>
+      <h1>Tuesday Recorder</h1>
+      <p>Simple recording. Complete control.</p>
+    </div>
+    <div class="status"><span id="statusDot"></span><span id="statusText">Ready</span></div>
+  </header>
+
+  <main>
+    <section id="playbackPanel" class="card" style="padding:20px" hidden>
+      <h2>Playback devices</h2><p>Record audio sent to your speakers, headphones, or HDMI output.</p>
+      <button id="refreshPlayback">Refresh devices</button><div id="playbackDevices"></div>
+      <p style="color:#9da7b7">Add a device below, then adjust its slider in the mixer. Avoid also adding System Audio for the same sound.</p>
+    </section>
+    <section class="toolbar card">
+      <div class="toolbar-row source-tools">
+        <button id="addMic" class="secondary">＋ Microphone</button>
+        <button id="playbackTab" class="secondary" aria-expanded="false">＋ Playback devices</button>
+        <button id="addSystem" class="secondary">＋ System audio</button>
+        <button id="addApp" class="secondary">＋ Application</button>
+      </div>
+      <div class="toolbar-row utility-tools">
+        <button id="profilesButton" class="secondary">⚙ Mix profiles</button>
+        <button id="settingsButton" class="secondary">⚙ Settings</button>
+        <span class="spacer"></span>
+        <label class="quality">MP3 quality
+          <select id="bitrate"><option value="128">128 kbps</option><option value="192">192 kbps</option><option value="256">256 kbps</option><option value="320" selected>320 kbps</option></select>
+        </label>
+      </div>
+    </section>
+
+    <section class="card mixer">
+      <div class="section-title"><div><h2>Audio mixer</h2><p>Each source is mixed into the final MP3.</p></div></div>
+      <div id="emptyState"><div class="empty-icon">♫</div><h3>Add an audio source</h3><p>Choose a microphone, your computer audio, or one application.</p></div>
+      <div id="sourceList"></div>
+      <div class="master" id="masterStrip">
+        <div><strong>Master output</strong><small>Final recording level</small></div>
+        <div class="stereo-meter" aria-label="Master left and right levels">
+          <div><span>L</span><div class="meter"><i id="masterMeterLeft"></i></div></div>
+          <div><span>R</span><div class="meter"><i id="masterMeterRight"></i></div></div>
+        </div>
+        <input id="masterVolume" type="range" min="0" max="300" value="100">
+        <output id="masterValue">100%</output>
+        <button id="masterMute" class="icon-button" title="Mute master">🔊</button>
+      </div>
+    </section>
+
+    <section class="transport card">
+      <div id="quickNameRow" class="quick-name" hidden>
+        <label><span>File name</span><input id="quickFileName" maxlength="80" autocomplete="off" placeholder="Enter file name"></label>
+        <small id="quickNamePreview"></small>
+      </div>
+      <div class="timer" id="timer">00:00:00</div>
+      <div class="transport-buttons">
+        <button id="record" class="record">● Record</button>
+        <button id="pause" class="secondary" disabled>Ⅱ Pause</button>
+        <button id="stop" class="stop" disabled>■ Stop & save MP3</button>
+      </div>
+      <p id="message">Recordings stay on this computer.</p>
+    </section>
+  </main>
+
+  <dialog id="picker">
+    <form method="dialog">
+      <div class="dialog-head"><h2 id="pickerTitle">Choose source</h2><button value="cancel" class="close">×</button></div>
+      <div id="pickerList"></div>
+      <div class="dialog-actions"><button value="cancel" class="secondary">Cancel</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="renameDialog">
+    <form method="dialog" id="renameForm">
+      <div class="dialog-head"><h2>Edit source name</h2><button value="cancel" class="close">×</button></div>
+      <div class="dialog-body">
+        <label class="field">Friendly name<input id="renameInput" maxlength="80" autocomplete="off" required></label>
+      </div>
+      <div class="dialog-actions"><button value="cancel" class="secondary">Cancel</button><button id="renameSave" value="default">Save name</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="profilesDialog">
+    <form method="dialog" id="profilesForm">
+      <div class="dialog-head"><div><h2>Mix profiles</h2><p>Save your sources, names, levels, pan, master level, and MP3 quality.</p></div><button value="cancel" class="close">×</button></div>
+      <div class="dialog-body profile-grid">
+        <label class="field">Saved profiles<select id="profileSelect"></select></label>
+        <div class="profile-actions"><button id="loadProfile" type="button">Load selected</button><button id="deleteProfile" type="button" class="danger">Delete</button></div>
+        <label class="default-profile"><input id="defaultProfile" type="checkbox"> Load the selected profile automatically when Tuesday Recorder starts</label>
+        <hr>
+        <label class="field">Profile name<input id="profileName" maxlength="60" autocomplete="off" placeholder="Example: Podcast setup"></label>
+        <button id="saveProfile" type="button">Save current mix</button>
+        <p id="profileMessage" class="profile-message"></p>
+      </div>
+      <div class="dialog-actions"><button value="cancel" class="secondary">Done</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="settingsDialog">
+    <form method="dialog" id="settingsForm">
+      <div class="dialog-head"><div><h2>Settings</h2><p>Choose how Tuesday Recorder prepares your saved files.</p></div><button value="cancel" class="close">×</button></div>
+      <div class="dialog-body settings-grid">
+        <fieldset class="settings-group">
+          <legend>File naming</legend>
+          <label class="choice-card"><input type="radio" name="fileNamingMode" value="standard"> <span><strong>Standard</strong><small>Recording MM.DD.YY-HH.MM.AM/PM.mp3</small></span></label>
+          <label class="choice-card"><input type="radio" name="fileNamingMode" value="named"> <span><strong>Name + standard date</strong><small>Name MM.DD.YY-HH.MM.AM/PM.mp3</small></span></label>
+          <label class="choice-card"><input type="radio" name="fileNamingMode" value="template"> <span><strong>Custom format</strong><small>Arrange the name, date, and time exactly as you prefer</small></span></label>
+          <div class="format-field">
+            <label class="field">Filename format<input id="customFormat" maxlength="180" autocomplete="off" placeholder="{name} {MM}.{DD}.{YY}-{hh}.{mm}.{AMPM}"></label>
+            <div class="token-buttons" aria-label="Filename format fields">
+              <button type="button" data-token="{name}">Name</button><button type="button" data-token="{MM}">Month</button><button type="button" data-token="{DD}">Day</button><button type="button" data-token="{YY}">Year (2)</button><button type="button" data-token="{YYYY}">Year (4)</button><button type="button" data-token="{hh}">Hour</button><button type="button" data-token="{mm}">Minute</button><button type="button" data-token="{AMPM}">AM/PM</button>
+            </div>
+          </div>
+          <div class="filename-preview"><span>Preview</span><strong id="filenamePreview"></strong></div>
+          <p class="settings-note">If your choice uses Name, an Enter file name box appears beside the recording controls. The Save window opens with the completed filename already filled in.</p>
+          <p class="settings-note">Windows cannot use a slash in a filename, so the ending appears as .AM or .PM.</p>
+        </fieldset>
+        <fieldset class="settings-group">
+          <legend>Mix profile</legend>
+          <label class="field">Load at startup<select id="settingsDefaultProfile"></select></label>
+          <p class="settings-note">The selected mix profile will automatically restore its sources, names, volume, pan, master level, and MP3 quality whenever Tuesday Recorder starts.</p>
+        </fieldset>
+        <fieldset class="settings-group">
+          <legend>Saving and recovery</legend>
+          <label class="field">Default recording folder
+            <span class="folder-picker"><input id="defaultRecordingFolder" readonly aria-label="Default recording folder"><button id="browseRecordingFolder" type="button">Browse…</button></span>
+          </label>
+          <label class="autosave-toggle"><input id="autoSaveEnabled" type="checkbox"> <span><strong>Automatically save recovery checkpoints</strong><small>Protects the current recording if Tuesday Recorder or Windows closes unexpectedly.</small></span></label>
+          <label class="field interval-field">Save a checkpoint every
+            <span class="number-with-unit"><input id="autoSaveSeconds" type="number" min="5" max="3600" step="5" value="10"><span>seconds</span></span>
+          </label>
+          <p class="settings-note">The default is 10 seconds. Use the small arrows or type any value from 5 to 3,600 seconds. Pressing Stop creates one finished MP3 and removes its temporary checkpoints.</p>
+        </fieldset>
+        <p id="settingsMessage" class="profile-message"></p>
+      </div>
+      <div class="dialog-actions"><button value="cancel" class="secondary">Cancel</button><button id="saveSettings" value="default">Save settings</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="recoveryDialog">
+    <form method="dialog">
+      <div class="dialog-head"><div><h2>Recover recordings</h2><p>Tuesday Recorder found audio saved before an unexpected closure.</p></div><button value="cancel" class="close">×</button></div>
+      <div class="dialog-body">
+        <div id="recoveryList" class="recovery-list"></div>
+        <p id="recoveryMessage" class="profile-message"></p>
+      </div>
+      <div class="dialog-actions"><button value="cancel" class="secondary">Later</button></div>
+    </form>
+  </dialog>
+
+  <template id="stripTemplate">
+    <div class="strip">
+      <div class="strip-main">
+        <div class="source-identity"><span class="source-icon"></span><div><strong class="source-name"></strong><small class="source-kind"></small></div></div>
+        <div class="stereo-meter" aria-label="Left and right audio levels">
+          <div><span>L</span><div class="meter"><i class="meter-left"></i></div></div>
+          <div><span>R</span><div class="meter"><i class="meter-right"></i></div></div>
+        </div>
+        <input class="volume" type="range" min="0" max="300" value="100" aria-label="Source volume">
+        <output class="volume-value">100%</output>
+        <button class="edit icon-button" title="Edit source name">✎</button>
+        <button class="mute icon-button" title="Mute">🔊</button>
+        <button class="remove icon-button" title="Remove">×</button>
+      </div>
+      <div class="strip-pan">
+        <span>Left</span><input class="pan" type="range" min="-100" max="100" value="0" aria-label="Stereo pan"><span>Right</span><output class="pan-value">Center</output>
+      </div>
+    </div>
+  </template>
+  <script src="renderer.js"></script>
+  <script src="playback-renderer.js"></script>
+</body>
+</html>
